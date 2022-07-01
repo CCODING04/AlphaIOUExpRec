@@ -4,6 +4,7 @@ import numpy as np
 
 import torch
 from alphaiou_o import bbox_alpha_iou
+from alphaiou_mm import alphaiou_loss
 
 
 def gen_bbox(seed=None):
@@ -77,8 +78,13 @@ def main():
     cv2.imwrite('vis.png', canvas)
     bbox1 = torch.from_numpy(bbox1)
     bbox2 = torch.from_numpy(bbox2)
-    aiou = bbox_alpha_iou(bbox1, bbox2, x1y1x2y2=True, alpha=3)
-    print(aiou)
+    aiou_o = bbox_alpha_iou(bbox1, bbox2, x1y1x2y2=True, alpha=3, GIoU=True)
+    print("alpha-iou original:", 1 - aiou_o)
+    bbox1 = bbox1.unsqueeze(0)
+    bbox2 = bbox2.unsqueeze(0)
+    aiou_loss_mm = alphaiou_loss(bbox1, bbox2, alpha=3, mode='giou')
+    print("alpha-iou mmdet:", aiou_loss_mm)
+
 
 if __name__ == "__main__":
     main()
