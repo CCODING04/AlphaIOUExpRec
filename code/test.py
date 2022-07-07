@@ -56,7 +56,7 @@ def vis(bbox1, bbox2):
     bbox1 = bbox1 - min_v
     bbox2 = bbox2 - min_v
     hw = max_v - min_v
-    canvas = np.ones((hw, hw, 3), dtype=np.uint8)*255
+    canvas = np.ones((hw, hw, 3), dtype=np.uint8)*128
 
     cv2.rectangle(canvas, tuple(bbox1[:2]), tuple(bbox1[2:]), (0, 255, 0), -1)
     cv2.rectangle(canvas, tuple(bbox2[:2]), tuple(bbox2[2:]), (0, 0, 255), -1)
@@ -155,6 +155,7 @@ def batch_test(num_rounds=100, mode='iou'):
 def main():
     # torch.set_printoptions(precision=10)
     torch.set_printoptions(sci_mode=True)
+    # single_test()
     for mode in ['iou', 'giou', 'diou', 'ciou']:
         batch_test(mode=mode)
 
