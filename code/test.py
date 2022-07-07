@@ -72,7 +72,8 @@ def vis(bbox1, bbox2):
     return canvas
 
 
-def main():
+def single_test():
+    # only one box test
     bbox1, bbox2 = gen_bbox()
     canvas = vis(bbox1, bbox2)
     cv2.imwrite('vis.png', canvas)
@@ -84,6 +85,52 @@ def main():
     bbox2 = bbox2.unsqueeze(0)
     aiou_loss_mm = alphaiou_loss(bbox1, bbox2, alpha=3, mode='giou')
     print("alpha-iou mmdet:", aiou_loss_mm)
+
+
+def batch_test(num_rounds=100):
+    # bach cases test
+    for _ in range(num_rounds):
+        bboxes1, bboxes2 = list(), list()
+        num_bbox = 8 # random.randint(1, 20)
+        for seed in range(num_bbox):
+            bbox1, bbox2 = gen_bbox(seed)
+            bboxes1.append(bbox1)
+            bboxes2.append(bbox2)
+
+        # alphaiou original
+        results_o = []
+        for bbox1, bbox2 in zip(bboxes1, bboxes2):
+            bbox1 = torch.from_numpy(bbox1)
+            bbox2 = torch.from_numpy(bbox2)
+            aiou_o = bbox_alpha_iou(bbox1, bbox2, x1y1x2y2=True, alpha=3)
+            results_o.append(1. - aiou_o.item())
+        print()
+
+        # alphaiou mm-implementation
+        
+        bboxes1 = np.concatenate([np.expand_dims(x, 0) for x in bboxes1], axis=0)
+        bboxes2 = np.concatenate([np.expand_dims(x, 0) for x in bboxes2], axis=0)
+        bboxes1 = torch.from_numpy(bboxes1)
+        bboxes2 = torch.from_numpy(bboxes2)
+        aiou_loss_mm = alphaiou_loss(bboxes1, bboxes2, alpha=3, mode='iou')
+        results_mm = aiou_loss_mm.cpu().numpy().tolist()
+        
+        
+        # test equal
+        # results_o = np.array(results_o)
+        # results_mm = np.array(results_mm)
+        print(results_o)
+        print(results_mm)
+        print(all([x==y for x, y in zip(results_o, results_mm)]))
+        exit(0)
+
+
+
+def main():
+    # torch.set_printoptions(precision=10)
+    torch.set_printoptions(sci_mode=True)
+    batch_test()
+
 
 
 if __name__ == "__main__":
