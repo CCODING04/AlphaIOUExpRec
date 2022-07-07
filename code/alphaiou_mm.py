@@ -24,13 +24,7 @@ def alphaiou_loss(pred, target, alpha=3, eps=1e-9, mode='iou'):
 
     # change conventional iou to alpha pow
     ious = torch.pow(overlap / union + eps, alpha)
-    print(ious)
-    # test
-    # overlap_s = overlap.split(1, 0)
-    # union_s = union.split(1, 0)
-    # for ol, un in zip(overlap_s, union_s):
-    #     print(torch.pow(ol/un+eps, alpha), end=' ')
-
+    
     # calculate alpha-iou according mode
     if mode == 'iou':
         loss = 1 - ious

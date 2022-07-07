@@ -28,7 +28,6 @@ def bbox_alpha_iou(box1, box2, x1y1x2y2=False, GIoU=False, DIoU=False, CIoU=Fals
     # change iou into pow(iou+eps)
     # iou = inter / union
     iou = torch.pow(inter/union + eps, alpha)
-    print(iou, end=' ')
 
     # beta = 2 * alpha
     if GIoU or DIoU or CIoU:

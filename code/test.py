@@ -89,22 +89,29 @@ def single_test():
 
 def batch_test(num_rounds=100):
     # bach cases test
-    for _ in range(num_rounds):
+    all_test_results = []
+    for ix in range(num_rounds):
         bboxes1, bboxes2 = list(), list()
-        num_bbox = 8 # random.randint(1, 20)
+        num_bbox = random.randint(1, 20)
         for seed in range(num_bbox):
-            bbox1, bbox2 = gen_bbox(seed)
+            bbox1, bbox2 = gen_bbox()
             bboxes1.append(bbox1)
             bboxes2.append(bbox2)
 
         # alphaiou original
-        results_o = []
-        for bbox1, bbox2 in zip(bboxes1, bboxes2):
-            bbox1 = torch.from_numpy(bbox1)
-            bbox2 = torch.from_numpy(bbox2)
-            aiou_o = bbox_alpha_iou(bbox1, bbox2, x1y1x2y2=True, alpha=3)
-            results_o.append(1. - aiou_o.item())
-        print()
+        bboxes1 = np.concatenate([np.expand_dims(x, 0) for x in bboxes1], axis=0)
+        bboxes2 = np.concatenate([np.expand_dims(x, 0) for x in bboxes2], axis=0)
+        bboxes1 = torch.from_numpy(bboxes1)
+        bboxes2 = torch.from_numpy(bboxes2)
+        aiou_o = bbox_alpha_iou(bboxes1.T, bboxes2, x1y1x2y2=True, alpha=3)
+        # results_o = []
+        # for bbox1, bbox2 in zip(bboxes1, bboxes2):
+        #     bbox1 = torch.from_numpy(bbox1)
+        #     bbox2 = torch.from_numpy(bbox2)
+        #     aiou_o = bbox_alpha_iou(bbox1, bbox2, x1y1x2y2=True, alpha=3)
+        #     results_o.append(1 - aiou_o)
+        results_o = 1 - aiou_o
+        results_o = results_o.cpu().numpy().tolist()
 
         # alphaiou mm-implementation
         
@@ -116,13 +123,20 @@ def batch_test(num_rounds=100):
         results_mm = aiou_loss_mm.cpu().numpy().tolist()
         
         
-        # test equal
-        # results_o = np.array(results_o)
-        # results_mm = np.array(results_mm)
-        print(results_o)
-        print(results_mm)
-        print(all([x==y for x, y in zip(results_o, results_mm)]))
-        exit(0)
+        """
+        print(f'======{ix} round test======')
+        # print('original loss:', results_o)
+        # print('mm-imp loss:', results_mm)
+        is_eq = all([x==y for x, y in zip(results_o, results_mm)])
+        all_test_results.append(is_eq)
+        print("test results [original loss] == [mm-imp loss]",is_eq)
+        """
+
+        is_eq = all([x==y for x, y in zip(results_o, results_mm)])
+        all_test_results.append(is_eq)
+    print(f'# Tests: {num_rounds}')
+    print('All tests passed:', all(all_test_results))
+        
 
 
 
