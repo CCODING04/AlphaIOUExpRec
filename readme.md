@@ -16,9 +16,9 @@
 ```bash
 ❯ python code/test.py
 # Tests IOU: 100
-All tests equal: False
+All tests equal: True
 # Tests GIOU: 100
-All tests equal: False
+All tests equal: True
 # Tests DIOU: 100
 All tests equal: True
 # Tests CIOU: 100

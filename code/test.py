@@ -94,9 +94,9 @@ def batch_test(num_rounds=100, mode='iou'):
     all_test_results = []
     for ix in range(num_rounds):
         bboxes1, bboxes2 = list(), list()
-        num_bbox = random.randint(1, 20)
+        num_bbox = 10 # random.randint(1, 20)
         for seed in range(num_bbox):
-            bbox1, bbox2 = gen_bbox()
+            bbox1, bbox2 = gen_bbox(seed)
             bboxes1.append(bbox1)
             bboxes2.append(bbox2)
 
@@ -105,7 +105,6 @@ def batch_test(num_rounds=100, mode='iou'):
         bboxes2 = np.concatenate([np.expand_dims(x, 0) for x in bboxes2], axis=0)
         bboxes1 = torch.from_numpy(bboxes1)
         bboxes2 = torch.from_numpy(bboxes2)
-
         param_dict = {
             'box1': bboxes1.T,
             'box2': bboxes2,
@@ -115,15 +114,15 @@ def batch_test(num_rounds=100, mode='iou'):
             'CIoU': True if mode == 'ciou' else False, 
             'alpha': 3
         }
-        aiou_o = bbox_alpha_iou(bboxes1.T, bboxes2, x1y1x2y2=True, alpha=3, DIoU=True)
+        aiou_o = bbox_alpha_iou(**param_dict)
         # results_o = []
         # for bbox1, bbox2 in zip(bboxes1, bboxes2):
         #     bbox1 = torch.from_numpy(bbox1)
         #     bbox2 = torch.from_numpy(bbox2)
         #     aiou_o = bbox_alpha_iou(bbox1, bbox2, x1y1x2y2=True, alpha=3)
         #     results_o.append(1 - aiou_o)
-        results_o = 1 - aiou_o
-        results_o = results_o.cpu().numpy().tolist()
+        aiou_loss_o = 1 - aiou_o
+        results_o = aiou_loss_o.cpu().numpy().tolist()
 
         # alphaiou mm-implementation
         
@@ -143,9 +142,11 @@ def batch_test(num_rounds=100, mode='iou'):
         all_test_results.append(is_eq)
         print("test results [original loss] == [mm-imp loss]",is_eq)
         """
-
+        # print(aiou_loss_o)
+        # print(aiou_loss_mm)
         is_eq = all([x==y for x, y in zip(results_o, results_mm)])
         all_test_results.append(is_eq)
+        
     print(f'# Tests {mode.upper()}: {num_rounds}')
     print('All tests equal:', all(all_test_results))
         

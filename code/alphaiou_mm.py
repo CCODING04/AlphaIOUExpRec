@@ -37,6 +37,8 @@ def alphaiou_loss(pred, target, alpha=3, eps=1e-9, mode='iou'):
 
     cw = enclose_wh[:, 0]
     ch = enclose_wh[:, 1]
+    # cw = torch.max(b1_x2, b2_x2) - torch.min(b1_x1, b2_x1)  # convex (smallest enclosing box) width
+    # ch = torch.max(b1_y2, b2_y2) - torch.min(b1_y1, b2_y1)  # convex height
 
     if mode == 'giou':
         c_area = torch.max(cw * ch + eps, union)
@@ -63,7 +65,7 @@ def alphaiou_loss(pred, target, alpha=3, eps=1e-9, mode='iou'):
         v = factor * torch.pow(torch.atan(w2 / h2) - torch.atan(w1 / h1), 2)
 
         with torch.no_grad():
-            alpha_ciou = (ious > 0.5).float() * v / (1 - ious + v)
+            alpha_ciou = v / ((1 + eps) - overlap / union + v)
 
         # CIoU
         cious = ious - (rho2 / c2 + torch.pow(alpha_ciou * v + eps, alpha))
