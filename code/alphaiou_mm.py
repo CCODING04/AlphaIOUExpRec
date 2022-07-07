@@ -56,8 +56,8 @@ def alphaiou_loss(pred, target, alpha=3, eps=1e-9, mode='iou'):
         loss = 1 - dious
         return loss
     else:
-        w1, h1 = b1_x2 - b1_x1, b1_y2 - b1_y1 + eps
-        w2, h2 = b2_x2 - b2_x1, b2_y2 - b2_y1 + eps
+        # w1, h1 = b1_x2 - b1_x1, b1_y2 - b1_y1 + eps
+        # w2, h2 = b2_x2 - b2_x1, b2_y2 - b2_y1 + eps
 
         factor = 4 / math.pi**2
         v = factor * torch.pow(torch.atan(w2 / h2) - torch.atan(w1 / h1), 2)
@@ -66,6 +66,6 @@ def alphaiou_loss(pred, target, alpha=3, eps=1e-9, mode='iou'):
             alpha_ciou = (ious > 0.5).float() * v / (1 - ious + v)
 
         # CIoU
-        cious = ious - (rho2 / c2 + torch.pow(alpha_ciou * v, alpha))
+        cious = ious - (rho2 / c2 + torch.pow(alpha_ciou * v + eps, alpha))
         loss = 1 - cious
         return loss

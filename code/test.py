@@ -76,10 +76,10 @@ def single_test():
     # only one box test
     bbox1, bbox2 = gen_bbox()
     canvas = vis(bbox1, bbox2)
-    cv2.imwrite('vis.png', canvas)
+    cv2.imwrite('assets/vis.png', canvas)
     bbox1 = torch.from_numpy(bbox1)
     bbox2 = torch.from_numpy(bbox2)
-    aiou_o = bbox_alpha_iou(bbox1, bbox2, x1y1x2y2=True, alpha=3, GIoU=True)
+    aiou_o = bbox_alpha_iou(bbox1.T, bbox2, x1y1x2y2=True, alpha=3, GIoU=True)
     print("alpha-iou original:", 1 - aiou_o)
     bbox1 = bbox1.unsqueeze(0)
     bbox2 = bbox2.unsqueeze(0)
@@ -87,8 +87,10 @@ def single_test():
     print("alpha-iou mmdet:", aiou_loss_mm)
 
 
-def batch_test(num_rounds=100):
+def batch_test(num_rounds=100, mode='iou'):
     # bach cases test
+    mode = mode.lower()
+    assert mode in ['iou', 'giou', 'diou', 'ciou']
     all_test_results = []
     for ix in range(num_rounds):
         bboxes1, bboxes2 = list(), list()
@@ -103,7 +105,17 @@ def batch_test(num_rounds=100):
         bboxes2 = np.concatenate([np.expand_dims(x, 0) for x in bboxes2], axis=0)
         bboxes1 = torch.from_numpy(bboxes1)
         bboxes2 = torch.from_numpy(bboxes2)
-        aiou_o = bbox_alpha_iou(bboxes1.T, bboxes2, x1y1x2y2=True, alpha=3)
+
+        param_dict = {
+            'box1': bboxes1.T,
+            'box2': bboxes2,
+            'x1y1x2y2': True,
+            'GIoU': True if mode == 'giou' else False, 
+            'DIoU': True if mode == 'diou' else False, 
+            'CIoU': True if mode == 'ciou' else False, 
+            'alpha': 3
+        }
+        aiou_o = bbox_alpha_iou(bboxes1.T, bboxes2, x1y1x2y2=True, alpha=3, DIoU=True)
         # results_o = []
         # for bbox1, bbox2 in zip(bboxes1, bboxes2):
         #     bbox1 = torch.from_numpy(bbox1)
@@ -115,11 +127,11 @@ def batch_test(num_rounds=100):
 
         # alphaiou mm-implementation
         
-        bboxes1 = np.concatenate([np.expand_dims(x, 0) for x in bboxes1], axis=0)
-        bboxes2 = np.concatenate([np.expand_dims(x, 0) for x in bboxes2], axis=0)
-        bboxes1 = torch.from_numpy(bboxes1)
-        bboxes2 = torch.from_numpy(bboxes2)
-        aiou_loss_mm = alphaiou_loss(bboxes1, bboxes2, alpha=3, mode='iou')
+        # bboxes1 = np.concatenate([np.expand_dims(x, 0) for x in bboxes1], axis=0)
+        # bboxes2 = np.concatenate([np.expand_dims(x, 0) for x in bboxes2], axis=0)
+        # bboxes1 = torch.from_numpy(bboxes1)
+        # bboxes2 = torch.from_numpy(bboxes2)
+        aiou_loss_mm = alphaiou_loss(bboxes1, bboxes2, alpha=3, mode=mode)
         results_mm = aiou_loss_mm.cpu().numpy().tolist()
         
         
@@ -134,8 +146,8 @@ def batch_test(num_rounds=100):
 
         is_eq = all([x==y for x, y in zip(results_o, results_mm)])
         all_test_results.append(is_eq)
-    print(f'# Tests: {num_rounds}')
-    print('All tests passed:', all(all_test_results))
+    print(f'# Tests {mode.upper()}: {num_rounds}')
+    print('All tests equal:', all(all_test_results))
         
 
 
@@ -143,7 +155,8 @@ def batch_test(num_rounds=100):
 def main():
     # torch.set_printoptions(precision=10)
     torch.set_printoptions(sci_mode=True)
-    batch_test()
+    for mode in ['iou', 'giou', 'diou', 'ciou']:
+        batch_test(mode=mode)
 
 
 
