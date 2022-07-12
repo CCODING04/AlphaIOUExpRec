@@ -1,7 +1,7 @@
 # AlphaIOU 实验记录
   
 
-![实验结果](./assets/exp_results_0630.png)  
+![实验结果](./assets/AlphaIoU实验结果.png)  
   
 测试程序运行  
 ```bash
